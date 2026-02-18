@@ -485,7 +485,7 @@ elif st.session_state.page == "About":
         <div style="color:#666; font-size:0.8rem; margin-top:5px;">Department of Information Technology</div>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown("### Researchers & Developers")
+    st.markdown("### Engineering Team")
 
     # Team Members Grid
     c1, c2, c3, c4 = st.columns(4)
@@ -499,25 +499,25 @@ elif st.session_state.page == "About":
     with c2:
         st.markdown("""
         <div class="team-card">
-            <div class="team-role">Researcher</div>
+            <div class="team-role">ML Model Engineerr</div>
             <div class="team-name">S. Durga Bhavani</div>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown("""
         <div class="team-card">
-            <div class="team-role">Researcher</div>
+            <div class="team-role">Product & Frontend Developer</div>
             <div class="team-name">S. Tejaswin</div>
         </div>
         """, unsafe_allow_html=True)
     with c4:
         st.markdown("""
         <div class="team-card">
-            <div class="team-role">Researcher</div>
+            <div class="team-role">Model Integration Engineer</div>
             <div class="team-name">A. J. Sai Ganesh</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("### Contact Us")
-    st.write("For more information about this project, please contact: **22a91a12b9@aec.edu.in**")
+    st.write("For more information about this project, please contact: **rajababu.makineedi@adityauniversity.in**")
