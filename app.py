@@ -207,59 +207,111 @@ st.markdown("---")
 # ==========================================
 if st.session_state.page == "Home":
     
+    # 1. HERO SECTION
     col_hero_text, col_hero_img = st.columns([1.2, 1])
     
     with col_hero_text:
         st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
-        st.markdown('<h1 style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Automated Tobacco<br>Leaf Grading</h1>', unsafe_allow_html=True)
         st.markdown("""
-        <p style="font-size: 1.1rem; color: #9CA3AF; line-height: 1.6;">
-        An intelligent system utilizing Hybrid Deep Learning. We combine <b>EfficientNetB0</b> for texture analysis and <b>Vision Transformers</b> for global context to achieve 95.2% accuracy.
+        <div style="display: inline-block; background: rgba(0, 230, 118, 0.1); border: 1px solid #00E676; padding: 5px 15px; border-radius: 20px; color: #00E676; font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">
+            🍃 Aditya University IT Project
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<h1 style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(to right, #ffffff, #a0a0a0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2;">Automated Tobacco<br>Leaf Grading</h1>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        <p style="font-size: 1.1rem; color: #9CA3AF; line-height: 1.6; margin-top: 15px;">
+        Eliminating the subjectivity and fatigue of manual visual inspection. Our intelligent system utilizes a <b>Hybrid Deep Learning</b> architecture, fusing local texture analysis with global spatial awareness to achieve a validated <b>93.33% accuracy</b>.
         </p>
         """, unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🚀 Start Grading", key="hero_btn"):
+        
+        # Primary Call to Action
+        if st.button("🚀 Start Grading Analysis", key="hero_btn"):
             navigate_to("Analysis")
             st.rerun()
 
     with col_hero_img:
-        # Placeholder visual
+        # Enhanced visual placeholder with stats
         st.markdown("""
-        <div style="width: 100%; height: 350px; background: radial-gradient(circle, rgba(0,230,118,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 20px; display: flex; align-items: center; justify-content: center;">
-            <div style="font-size: 8rem;">🍃</div>
+        <div style="width: 100%; height: 100%; min-height: 350px; background: radial-gradient(circle at center, rgba(0,230,118,0.15) 0%, rgba(20,20,20,0.8) 70%); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+            <div style="font-size: 7rem; margin-bottom: 20px; text-shadow: 0 0 30px rgba(0,230,118,0.4);">🍃</div>
+            <div style="display: flex; gap: 20px;">
+                <div style="background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">93.3%</div>
+                    <div style="color: #888; font-size: 0.7rem; text-transform: uppercase;">Accuracy</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
+                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">< 300ms</div>
+                    <div style="color: #888; font-size: 0.7rem; text-transform: uppercase;">Latency</div>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
-    # Value Proposition Cards
+    # 2. VALUE PROPOSITION CARDS
+    st.markdown("### Why AgroGrade AI?")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("""
         <div class="glass-card">
-            <h3 style="color:#00E676;">⚡ Fast Inference</h3>
-            <p style="color:#999; font-size:0.9rem;">Processed in < 50ms using optimized EfficientNet backbones.</p>
+            <h3 style="color:#00E676; font-size: 1.3rem;">⚡ High-Speed Inference</h3>
+            <p style="color:#999; font-size:0.95rem; line-height: 1.5; margin-top: 10px;">
+            Designed for real-world industrial pacing. By utilizing highly optimized EfficientNet backbones, the system processes images in milliseconds, keeping up with active conveyor belts.
+            </p>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown("""
         <div class="glass-card">
-            <h3 style="color:#00E676;">🧠 Hybrid AI</h3>
-            <p style="color:#999; font-size:0.9rem;">Fuses Local CNN texture features with Global ViT Attention.</p>
+            <h3 style="color:#00E676; font-size: 1.3rem;">🧠 Hybrid Intelligence</h3>
+            <p style="color:#999; font-size:0.95rem; line-height: 1.5; margin-top: 10px;">
+            The best of both worlds. We successfully fused the microscopic texture feature extraction of CNNs with the macroscopic structural awareness of Vision Transformers.
+            </p>
         </div>
         """, unsafe_allow_html=True)
     with c3:
         st.markdown("""
         <div class="glass-card">
-            <h3 style="color:#00E676;">🎯 3-Grade System</h3>
-            <p style="color:#999; font-size:0.9rem;">Calibrated specifically for Grade A, B, and C classification.</p>
+            <h3 style="color:#00E676; font-size: 1.3rem;">🎯 Precision Grading</h3>
+            <p style="color:#999; font-size:0.95rem; line-height: 1.5; margin-top: 10px;">
+            Calibrated specifically for industry standards. The model accurately classifies leaves into Grade A (High Quality), Grade B (Moderate), and Grade C (Low/Damaged).
+            </p>
         </div>
         """, unsafe_allow_html=True)
+        
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    # 3. QUICK GUIDE SECTION
+    st.markdown("""
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 30px;">
+        <h3 style="margin-top: 0; color: #E0E0E0;">Getting Started</h3>
+        <div style="display: flex; gap: 30px; margin-top: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <div style="color: #00E676; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">1</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">Navigate to Analysis</div>
+                <div style="color: #888; font-size: 0.9rem;">Click the 'Start Grading' button or use the top navigation bar.</div>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <div style="color: #00E676; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">2</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">Upload or Capture</div>
+                <div style="color: #888; font-size: 0.9rem;">Provide an image of a cured tobacco leaf using your file explorer or webcam.</div>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <div style="color: #00E676; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">3</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">View Insights</div>
+                <div style="color: #888; font-size: 0.9rem;">Instantly receive the predicted grade, confidence metrics, and comparative model analysis.</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# ==========================================
-# PAGE: ANALYSIS
-# ==========================================
 # ==========================================
 # PAGE: ANALYSIS
 # ==========================================
@@ -276,7 +328,6 @@ elif st.session_state.page == "Analysis":
     with row1_col1:
         st.markdown("### 1. Image Input")
         
-        # WEBCAM FIX: Using st.radio to explicitly toggle source avoids layout jumps
         input_source = st.radio("Select Source:", ["Upload Image", "Use Camera"], horizontal=True)
         
         image = None
@@ -298,8 +349,10 @@ elif st.session_state.page == "Analysis":
                 image = Image.open(cam_img).convert("RGB")
         
         if image:
-            st.markdown("### Preview")
-            st.image(image, use_container_width=True)
+            st.markdown("### Image Preview")
+            st.image(image, use_container_width=True, clamp=True)
+            # Added Image Metadata for an "Industrial Tool" feel
+            st.markdown(f"<p style='color:#888; font-size:0.8rem; text-align:center;'>Original Resolution: {image.size[0]}x{image.size[1]} px</p>", unsafe_allow_html=True)
 
     with row1_col2:
         st.markdown("### 2. Grading Results")
@@ -309,21 +362,17 @@ elif st.session_state.page == "Analysis":
             img_arr = np.array(image.resize((IMG_SIZE, IMG_SIZE))).astype(np.float32)
             img_arr = np.expand_dims(img_arr, 0)
             
-            # Check if models loaded
             if hybrid is None:
                 st.error("⚠️ Models failed to load. Please ensure 'cnn_model.keras', 'vit_model.keras', and 'hybrid_model.keras' are in the directory.")
             else:
                 # --- MODE 1: SINGLE PREDICTION ---
                 if mode == "Single Prediction (Fast)":
                     
-                    # === NEW: DROP DOWN MENU ===
                     selected_model_name = st.selectbox("Select Model for Analysis:", list(models.keys()))
                     model = models[selected_model_name]
-                    # ===========================
 
                     with st.spinner(f"Analyzing with {selected_model_name}..."):
-                        # Artificial delay for UX
-                        time.sleep(0.5)
+                        time.sleep(0.3) # Slight delay for UX
                         
                         start_t = time.time()
                         preds = model.predict(img_arr)
@@ -334,50 +383,63 @@ elif st.session_state.page == "Analysis":
                         grade = CLASS_NAMES[idx]
                         latency = (end_t - start_t) * 1000
 
+                    # Dynamic styling based on confidence
+                    border_color = "#00E676" if conf >= 75 else ("#FFB300" if conf >= 50 else "#F44336")
+                    
                     # Result Card
                     st.markdown(f"""
-                    <div class="result-card">
-                        <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: #00E676; margin-bottom: 10px;">{selected_model_name} Output</div>
+                    <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid {border_color}; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); margin-bottom: 20px;">
+                        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; color: {border_color}; margin-bottom: 10px;">{selected_model_name} Output</div>
                         <h1 style="font-size: 3.5rem; margin: 0; color: #fff;">{grade}</h1>
                         <div style="margin-top: 20px; display: flex; justify-content: center; gap: 40px;">
                             <div>
                                 <div style="color: #888; font-size: 0.8rem;">CONFIDENCE</div>
-                                <div style="font-size: 1.5rem; font-weight: 700;">{conf:.1f}%</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: {border_color};">{conf:.1f}%</div>
                             </div>
                             <div>
-                                <div style="color: #888; font-size: 0.8rem;">LATENCY</div>
+                                <div style="color: #888; font-size: 0.8rem;">INFERENCE TIME</div>
                                 <div style="font-size: 1.5rem; font-weight: 700;">{latency:.0f} ms</div>
                             </div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Bar Chart
-                    st.markdown("#### Class Probabilities")
+                    # Low Confidence Warning Trigger
+                    if conf < 60:
+                        st.warning("⚠️ **Low Confidence Warning:** The model is unsure. This leaf may contain anomalous defects or require manual expert review.")
+
+                    # Actionable Insights based on Grade
+                    insights = {
+                        "Grade A": "Premium quality leaf. Recommended for high-end product manufacturing. Market value is optimal.",
+                        "Grade B": "Standard quality leaf. Suitable for general commercial use. Minor blemishes detected.",
+                        "Grade C": "Low quality or damaged leaf. Recommended for alternative extraction or lower-tier products."
+                    }
+                    
+                    st.info(f"💡 **Industrial Recommendation:** {insights.get(grade, '')}")
+
+                    # Sleek HTML/CSS Progress Bars instead of Matplotlib
+                    st.markdown("#### Class Probability Distribution")
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    
                     probs = {name: float(p)*100 for name, p in zip(CLASS_NAMES, preds[0])}
-                    
-                    # Create custom dark theme chart
-                    fig, ax = plt.subplots(figsize=(6, 2))
-                    fig.patch.set_facecolor('#050505')
-                    ax.set_facecolor('#050505')
-                    
-                    y_pos = np.arange(len(probs))
-                    bars = ax.barh(y_pos, list(probs.values()), color='#00E676')
-                    
-                    ax.set_yticks(y_pos)
-                    ax.set_yticklabels(list(probs.keys()), color='white')
-                    ax.set_xticks([0, 25, 50, 75, 100])
-                    ax.tick_params(colors='white', axis='x')
-                    
-                    for spine in ax.spines.values(): 
-                        spine.set_edgecolor('#333')
-                    
-                    st.pyplot(fig)
-                    plt.close(fig) # Close figure to free memory
+                    for class_name, prob in probs.items():
+                        bar_color = "#00E676" if class_name == grade else "#444"
+                        text_color = "#fff" if class_name == grade else "#888"
+                        st.markdown(f"""
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span style="color: {text_color}; font-size: 0.95rem; font-weight: 600;">{class_name}</span>
+                                <span style="color: {text_color}; font-size: 0.95rem;">{prob:.1f}%</span>
+                            </div>
+                            <div style="width: 100%; background-color: #222; border-radius: 8px; height: 12px; overflow: hidden;">
+                                <div style="width: {prob}%; background-color: {bar_color}; height: 100%; border-radius: 8px; transition: width 0.5s ease-in-out;"></div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                 # --- MODE 2: MODEL COMPARISON ---
                 else:
-                    st.markdown("Running comprehensive analysis...")
+                    st.markdown("Running comprehensive analysis across all architectures...")
                     results = []
                     my_bar = st.progress(0)
                     
@@ -389,86 +451,151 @@ elif st.session_state.page == "Analysis":
                         
                         conf = float(np.max(p)) * 100
                         g = CLASS_NAMES[np.argmax(p)]
-                        results.append({"Model": name, "Grade": g, "Conf": conf})
+                        latency = (end_t - start_t) * 1000
+                        results.append({"Model": name, "Grade": g, "Conf": conf, "Latency": latency})
                         i += 1
                         my_bar.progress(i / 3)
                     
+                    time.sleep(0.3)
+                    my_bar.empty()
                     st.markdown("<br>", unsafe_allow_html=True)
                     
+                    # Enhanced Comparison Display
                     for res in results:
-                        border = "2px solid #00E676" if "Hybrid" in res['Model'] else "1px solid #333"
-                        bg = "rgba(0, 230, 118, 0.05)" if "Hybrid" in res['Model'] else "#111"
+                        is_hybrid = "Hybrid" in res['Model']
+                        border = "2px solid #00E676" if is_hybrid else "1px solid #333"
+                        bg = "rgba(0, 230, 118, 0.05)" if is_hybrid else "#111"
+                        badge = '<span style="background:#00E676; color:#000; font-size:0.7rem; padding: 2px 8px; border-radius: 10px; margin-left:10px; font-weight:bold;">RECOMMENDED</span>' if is_hybrid else ''
                         
                         st.markdown(f"""
-                        <div style="background: {bg}; padding: 15px; border-radius: 10px; border: {border}; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="background: {bg}; padding: 20px; border-radius: 12px; border: {border}; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="color: #888; font-size: 0.9rem;">{res['Model']}</div>
-                                <div style="font-size: 1.2rem; font-weight: bold;">{res['Grade']}</div>
+                                <div style="color: #888; font-size: 0.85rem; text-transform: uppercase;">{res['Model']} {badge}</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #fff; margin-top: 5px;">{res['Grade']}</div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">{res['Conf']:.1f}%</div>
+                            <div style="text-align: right; display: flex; gap: 20px;">
+                                <div>
+                                    <div style="color: #888; font-size: 0.7rem;">CONFIDENCE</div>
+                                    <div style="color: {'#00E676' if is_hybrid else '#fff'}; font-size: 1.2rem; font-weight: bold;">{res['Conf']:.1f}%</div>
+                                </div>
+                                <div>
+                                    <div style="color: #888; font-size: 0.7rem;">LATENCY</div>
+                                    <div style="color: #fff; font-size: 1.2rem; font-weight: bold;">{res['Latency']:.0f} ms</div>
+                                </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
 
         else:
-            st.info("👈 Please select an image source to begin.")
+            st.info("👈 Please select an image source to begin the automated grading process.")
 
 
 # ==========================================
 # PAGE: RESEARCH
 # ==========================================
 elif st.session_state.page == "Research":
-    st.markdown("# 📘 Research Methodology")
-    st.markdown("*Automated Tobacco Leaf Grading Using Hybrid Deep Learning*")
+    st.markdown("# 📘 Research & Methodology")
+    st.markdown("*Demystifying the AI behind Automated Tobacco Leaf Grading*")
     
+    # 1. THE PROBLEM & OBJECTIVE
     st.markdown("""
-    <div class="glass-card" style="border-left: 4px solid #00E676;">
-    <b>Abstract:</b> We propose a dual-branch architecture that mitigates the limitations of small datasets (300 images per class) in agricultural grading. 
-    By fusing <b>EfficientNetB0</b> (for local texture) and a custom <b>Vision Transformer</b> (for global geometry), we achieved a validation accuracy of 95.2%, significantly outperforming standalone models.
+    <div class="glass-card" style="border-left: 4px solid #00E676; margin-bottom: 20px;">
+    <h3>The Industry Challenge</h3>
+    <p style="color:#E0E0E0; line-height:1.7;">
+    Tobacco leaf grading plays an important role in determining the market value and quality of tobacco products[cite: 21]. However, in most agricultural industries today, this critical process is still performed manually by human experts who visually inspect leaves based on color, texture, and visible defects[cite: 22]. This manual approach has major limitations: it is highly subjective, labor-intensive, and prone to inconsistency due to human fatigue and varying lighting conditions[cite: 23, 70, 71]. Our objective was to engineer an automated, scalable solution that removes human error and delivers reliable grading suitable for real-time industrial deployment[cite: 27, 72].
+    </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🏗️ Architecture Design")
-    
+
+    # 2. THE HYBRID ARCHITECTURE
+    st.markdown("### 🧠 The 'Two-Expert' AI Architecture")
+    st.markdown("""
+    <p style="color:#aaa; line-height:1.6; margin-bottom: 20px;">
+    Handcrafted features and basic machine learning models (like SVM or KNN) often fail to capture the fine-grained differences required for accurate grading[cite: 56, 60]. To solve this, we developed a Hybrid Deep Learning system[cite: 24]. You can think of this as a "Two-Expert" committee, where two distinct types of artificial intelligence evaluate the leaf simultaneously before combining their findings.
+    </p>
+    """, unsafe_allow_html=True)
+
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("""
         <div class="glass-card">
-            <h4 style="color:#00E676">Branch 1: Local Texture (CNN)</h4>
-            <ul style="color:#aaa; line-height:1.6">
-                <li><b>Model:</b> EfficientNetB0 (Pre-trained on ImageNet)</li>
-                <li><b>Role:</b> Extracts high-frequency details like leaf veins, spots, and surface texture.</li>
-                <li><b>Output:</b> Global Average Pooling Vector.</li>
-            </ul>
+            <h4 style="color:#00E676">🔍 Expert 1: The Texture Detective</h4>
+            <p style="color:#aaa; font-size:0.9rem"><b>Convolutional Neural Network (EfficientNetB0)</b></p>
+            <p style="color:#E0E0E0; line-height:1.6">
+            The first branch of our model uses a highly optimized CNN[cite: 25]. Think of this expert as holding a magnifying glass to the leaf. It specializes in extracting localized, high-frequency texture features[cite: 37]. It scans the surface for microscopic details: the health of the veins, the presence of blemishes, spots, and subtle color variations[cite: 38]. By utilizing transfer learning with a pre-trained EfficientNet backbone, the model already understands basic visual concepts, allowing it to learn the specific traits of tobacco leaves with high efficiency[cite: 39, 80].
+            </p>
         </div>
         """, unsafe_allow_html=True)
+    
     with c2:
         st.markdown("""
         <div class="glass-card">
-            <h4 style="color:#00E676">Branch 2: Global Context (ViT)</h4>
-            <ul style="color:#aaa; line-height:1.6">
-                <li><b>Model:</b> Custom Vision Transformer</li>
-                <li><b>Config:</b> Patch Size 16x16, 4 Attention Heads, Projection Dim 128.</li>
-                <li><b>Role:</b> Analyzes the spatial structure and shape of the leaf.</li>
-            </ul>
+            <h4 style="color:#00E676">📐 Expert 2: The Big Picture Analyst</h4>
+            <p style="color:#aaa; font-size:0.9rem"><b>Vision Transformer (ViT)</b></p>
+            <p style="color:#E0E0E0; line-height:1.6">
+            While the CNN obsesses over the tiny details, our Vision Transformer takes a step back to view the global context[cite: 25]. Instead of scanning pixel-by-pixel, the ViT slices the image into a grid of small patches[cite: 90]. It utilizes a "self-attention mechanism" to understand how these different patches relate to one another mathematically[cite: 41]. This allows the model to comprehend the overall geometry, physical structure, and global shape of the leaf[cite: 42], ensuring it understands the macro-level quality just as well as the micro-level texture.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 📊 Dataset & Training")
+
+    # 3. FUSION & TRAINING
     st.markdown("""
-    * **Classes:** 3 (Grade A, Grade B, Grade C)
-    * **Total Images:** 900 (Balanced distribution: 300 per class)
-    * **Augmentation:** RandomFlip, RandomRotation (0.1), RandomZoom (0.1) to simulate industrial conveyor misalignment.
-    * **Fusion Strategy:** Feature Concatenation → Dense (512) → Dropout (0.5) → Output.
-    """)
+    <div class="glass-card" style="border: 1px solid rgba(0, 230, 118, 0.3); margin-bottom: 20px;">
+        <h4 style="color:#00E676">🤝 Feature Fusion & Model Training</h4>
+        <p style="color:#E0E0E0; line-height:1.7;">
+        Neither expert is perfect on their own, but together they form a highly accurate system. The local texture vectors from the CNN and the global structural vectors from the ViT are concatenated into a dense neural layer[cite: 90]. To prevent the AI from over-relying on any single feature, we apply a dropout regularization of 0.5[cite: 81, 90]. The model then outputs a final probability distribution to classify the leaf into Grade A (High Quality), Grade B (Moderate Quality), or Grade C (Low/Damaged)[cite: 84, 85, 86]. 
+        <br><br>
+        To ensure our model is robust enough for a messy factory environment, we trained it on a balanced dataset using extensive data augmentation[cite: 26, 81]. By digitally flipping, rotating, and zooming the training images, we forced the AI to recognize the true physical properties of the leaves regardless of how they are positioned on a conveyor belt.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 4. RESULTS
+    st.markdown("### 📊 Performance & Results")
+    st.markdown("""
+    <p style="color:#E0E0E0; line-height:1.7;">
+    Rigorous evaluation proved that combining these architectures achieves higher accuracy compared to individual models[cite: 47]. When tested on our validation dataset, the models performed as follows:
+    </p>
+    """, unsafe_allow_html=True)
+
+    # Create a nice layout for the results stats
+    r1, r2, r3 = st.columns(3)
+    with r1:
+        st.markdown("""
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: center;">
+            <p style="color:#aaa; margin:0;">Standalone ViT</p>
+            <h2 style="color:#fff; margin:0;">65.19%</h2>
+            <p style="font-size: 0.8rem; color:#888;">Struggled with small dataset [cite: 116]</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with r2:
+        st.markdown("""
+        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: center;">
+            <p style="color:#aaa; margin:0;">Standalone CNN</p>
+            <h2 style="color:#fff; margin:0;">84.44%</h2>
+            <p style="font-size: 0.8rem; color:#888;">Moderate performance [cite: 115]</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with r3:
+        st.markdown("""
+        <div style="background: rgba(0,230,118,0.1); border: 1px solid #00E676; padding: 20px; border-radius: 10px; text-align: center;">
+            <p style="color:#00E676; font-weight:bold; margin:0;">Hybrid Model</p>
+            <h2 style="color:#00E676; margin:0;">93.33%</h2>
+            <p style="font-size: 0.8rem; color:#00E676;">Highest Accuracy [cite: 114]</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <br>
+    <p style="color:#E0E0E0; line-height:1.7;">
+    <b>Inference Time Analysis:</b> For industrial deployment, speed is just as crucial as accuracy. We measured the prediction latency of each model. As expected, the standalone Vision Transformer is the fastest, and the CNN operates at a moderate speed[cite: 122, 123]. Because the Hybrid model processes data through two separate branches simultaneously, it takes slightly more time to generate a prediction[cite: 124]. However, this inference still occurs in a fraction of a second—a negligible tradeoff for a massive 9% jump in absolute accuracy, making it a highly viable solution for real-time agricultural automation.
+    </p>
+    """, unsafe_allow_html=True)
 
 # ==========================================
-
 # PAGE: ABOUT
-
 # ==========================================
 
 elif st.session_state.page == "About":
@@ -499,7 +626,7 @@ elif st.session_state.page == "About":
     with c2:
         st.markdown("""
         <div class="team-card">
-            <div class="team-role">ML Model Engineerr</div>
+            <div class="team-role">ML Model Engineer</div>
             <div class="team-name">S. Durga Bhavani</div>
         </div>
         """, unsafe_allow_html=True)
