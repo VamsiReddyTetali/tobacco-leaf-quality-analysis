@@ -102,15 +102,15 @@ st.markdown("""
 # ==========================================
 # 4. MODEL LOADING & CUSTOM LAYERS
 # ==========================================
+# ==========================================
+# 4. MODEL LOADING & CUSTOM LAYERS
+# ==========================================
 @tf.keras.utils.register_keras_serializable()
 class Patches(tf.keras.layers.Layer):
     def __init__(self, patch_size=1, **kwargs):
         super().__init__(**kwargs)
         self.patch_size = patch_size
         
-    def build(self, input_shape):
-        super().build(input_shape)
-    
     def call(self, images):
         batch_size = tf.shape(images)[0]
         patches = tf.image.extract_patches(
@@ -134,15 +134,17 @@ class PatchEncoder(tf.keras.layers.Layer):
         super().__init__(**kwargs)
         self.num_patches = num_patches
         self.embed_dim = embed_dim
-        self.proj = tf.keras.layers.Dense(embed_dim)
-        self.pos = tf.keras.layers.Embedding(input_dim=num_patches, output_dim=embed_dim)
 
+    # FIX: Initialize Keras sub-layers strictly inside the build method
     def build(self, input_shape):
+        self.proj = tf.keras.layers.Dense(self.embed_dim)
+        self.pos = tf.keras.layers.Embedding(input_dim=self.num_patches, output_dim=self.embed_dim)
         super().build(input_shape)
 
-    def call(self, x):
-        pos = tf.range(start=0, limit=tf.shape(x)[1])
-        return self.proj(x) + self.pos(pos)
+    def call(self, patch):
+        # FIX: Explicitly define the 1D position array to prevent the "Rank 3" shape error
+        positions = tf.range(start=0, limit=self.num_patches, delta=1)
+        return self.proj(patch) + self.pos(positions)
     
     def get_config(self):
         config = super().get_config()
