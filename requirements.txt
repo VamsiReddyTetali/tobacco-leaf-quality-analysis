@@ -1,8 +1,9 @@
 streamlit
-tensorflow-cpu
-numpy
+tensorflow==2.19.0
+keras==3.13.2
+numpy==2.0.2
 pillow
 matplotlib
-seaborn
+plotly
 scikit-learn
-reportlab
+seaborn

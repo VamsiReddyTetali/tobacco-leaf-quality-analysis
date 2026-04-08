@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 import time
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 # ==========================================
 # 1. APP CONFIGURATION
@@ -29,7 +30,6 @@ def navigate_to(page_name):
 # ==========================================
 st.markdown("""
     <style>
-    /* GLOBAL FONTS & COLORS */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
     
     html, body, [class*="css"] {
@@ -38,13 +38,11 @@ st.markdown("""
         color: #E0E0E0;
     }
     
-    /* REMOVE DEFAULT PADDING */
     .block-container {
         padding-top: 1rem;
         padding-bottom: 5rem;
     }
 
-    /* CUSTOM NAVIGATION BAR */
     [data-testid="stHorizontalBlock"] {
         align-items: center;
     }
@@ -63,7 +61,6 @@ st.markdown("""
         margin-left: 5px;
     }
 
-    /* CUSTOMIZE STREAMLIT BUTTONS FOR NAV */
     div.stButton > button {
         background-color: transparent;
         color: #E0E0E0;
@@ -81,13 +78,6 @@ st.markdown("""
         border: 1px solid rgba(0, 230, 118, 0.3);
     }
     
-    div.stButton > button:focus {
-        border-color: #00E676;
-        color: #00E676;
-        box-shadow: none;
-    }
-    
-    /* GLASS CARDS */
     .glass-card {
         background: rgba(20, 20, 20, 0.6);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -106,7 +96,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* TEAM CARD */
     .team-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.05);
@@ -122,16 +111,16 @@ st.markdown("""
         transform: translateY(-5px);
     }
     
-    /* HIDE DEFAULT HEADER */
     header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. MODEL LOADING
+# 4. MODEL LOADING & CUSTOM LAYERS
 # ==========================================
+@tf.keras.utils.register_keras_serializable()
 class Patches(tf.keras.layers.Layer):
-    def __init__(self, patch_size, **kwargs):
+    def __init__(self, patch_size=1, **kwargs):
         super().__init__(**kwargs)
         self.patch_size = patch_size
     
@@ -153,6 +142,7 @@ class Patches(tf.keras.layers.Layer):
         config.update({"patch_size": self.patch_size})
         return config
 
+@tf.keras.utils.register_keras_serializable()
 class PatchEncoder(tf.keras.layers.Layer):
     def __init__(self, num_patches, embed_dim, **kwargs):
         super().__init__(**kwargs)
@@ -164,11 +154,11 @@ class PatchEncoder(tf.keras.layers.Layer):
     def call(self, x):
         pos = tf.range(start=0, limit=tf.shape(x)[1])
         return self.proj(x) + self.pos(pos)
-
+    
     def get_config(self):
         config = super().get_config()
         config.update({
-            "num_patches": self.num_patches,
+            "num_patches": self.num_patches, 
             "embed_dim": self.embed_dim
         })
         return config
@@ -182,6 +172,7 @@ def load_models():
         hybrid = tf.keras.models.load_model("hybrid_final.keras", custom_objects=custom)
         return cnn, vit, hybrid
     except Exception as e:
+        print(f"Error loading models: {e}")
         return None, None, None
 
 cnn, vit, hybrid = load_models()
@@ -192,6 +183,7 @@ models = {
     "Hybrid Fusion (Proposed)": hybrid
 }
 
+# 🔥 4-GRADE SYSTEM
 CLASS_NAMES = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4']
 IMG_SIZE = 224
 
@@ -232,7 +224,7 @@ if st.session_state.page == "Home":
         st.markdown('<h1 style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(to right, #ffffff, #a0a0a0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2;">Automated Tobacco<br>Leaf Grading</h1>', unsafe_allow_html=True)
         st.markdown("""
         <p style="font-size: 1.1rem; color: #9CA3AF; line-height: 1.6;">
-        Eliminating the subjectivity and fatigue of manual visual inspection. Our intelligent system utilizes a <b>Hybrid Deep Learning</b> architecture, fusing local texture analysis with global spatial awareness to achieve a validated <b>95.2% accuracy</b>.
+        Eliminating the subjectivity and fatigue of manual visual inspection. Our intelligent system utilizes a <b>Hybrid Deep Learning</b> architecture, fusing local texture analysis with global spatial awareness to achieve a validated <b>95.4% accuracy</b> across 4 complex quality grades.
         </p>
         """, unsafe_allow_html=True)
         
@@ -247,11 +239,11 @@ if st.session_state.page == "Home":
             <div style="font-size: 7rem; margin-bottom: 20px; text-shadow: 0 0 30px rgba(0,230,118,0.4);">🍃</div>
             <div style="display: flex; gap: 20px;">
                 <div style="background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
-                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">95.2%</div>
+                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">95.4%</div>
                     <div style="color: #888; font-size: 0.7rem; text-transform: uppercase;">Accuracy</div>
                 </div>
                 <div style="background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 12px; border: 1px solid #333; text-align: center;">
-                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">< 300ms</div>
+                    <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">< 150ms</div>
                     <div style="color: #888; font-size: 0.7rem; text-transform: uppercase;">Latency</div>
                 </div>
             </div>
@@ -299,7 +291,6 @@ elif st.session_state.page == "Analysis":
         st.markdown("### 1. Image Input")
         
         input_source = st.radio("Select Source:", ["Upload Image", "Use Camera"], horizontal=True)
-        
         image = None
         
         if input_source == "Upload Image":
@@ -320,7 +311,7 @@ elif st.session_state.page == "Analysis":
         
         if image:
             st.markdown("### Preview")
-            st.image(image, use_container_width=True)
+            st.image(image, width="stretch")
 
     with row1_col2:
         st.markdown("### 2. Grading Results")
@@ -330,7 +321,7 @@ elif st.session_state.page == "Analysis":
             img_arr = np.expand_dims(img_arr, 0)
             
             if hybrid is None:
-                st.error("⚠️ Models failed to load. Please ensure your .keras files are in the directory.")
+                st.error("⚠️ Models failed to load. Please ensure 'cnn_final.keras', 'vit_final.keras', and 'hybrid_final.keras' are in the directory.")
             else:
                 # --- MODE 1: SINGLE PREDICTION ---
                 if mode == "Single Prediction (Fast)":
@@ -367,26 +358,28 @@ elif st.session_state.page == "Analysis":
                     </div>
                     """, unsafe_allow_html=True)
 
-                    st.markdown("#### Class Probabilities")
-                    probs = {name: float(p)*100 for name, p in zip(CLASS_NAMES, preds[0])}
-                    
-                    fig, ax = plt.subplots(figsize=(6, 2))
-                    fig.patch.set_facecolor('#050505')
-                    ax.set_facecolor('#050505')
-                    
-                    y_pos = np.arange(len(probs))
-                    bars = ax.barh(y_pos, list(probs.values()), color='#00E676')
-                    
-                    ax.set_yticks(y_pos)
-                    ax.set_yticklabels(list(probs.keys()), color='white')
-                    ax.set_xticks([0, 25, 50, 75, 100])
-                    ax.tick_params(colors='white', axis='x')
-                    
-                    for spine in ax.spines.values(): 
-                        spine.set_edgecolor('#333')
-                    
-                    st.pyplot(fig)
-                    plt.close(fig)
+                    # Dynamic plotly gauge
+                    fig = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=conf,
+                        title={'text': "Confidence Level", 'font': {'color': 'white'}},
+                        number={'font': {'color': 'white'}},
+                        gauge={
+                            'axis': {'range': [None, 100], 'tickcolor': "white"},
+                            'bar': {'color': "#00E676"},
+                            'bgcolor': "#333",
+                            'steps': [
+                                {'range': [0, 50], 'color': "#555"},
+                                {'range': [50, 85], 'color': "#777"}
+                            ],
+                            'threshold': {'line': {'color': "gold", 'width': 4}, 'thickness': 0.75, 'value': 90}
+                        }
+                    ))
+                    fig.update_layout(paper_bgcolor="#050505", font={'color': "white"}, height=250, margin=dict(l=20, r=20, t=30, b=20))
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    if selected_model_name == "Hybrid Fusion (Proposed)" and conf > 85:
+                        st.balloons()
 
                 # --- MODE 2: MODEL COMPARISON ---
                 else:
@@ -402,7 +395,8 @@ elif st.session_state.page == "Analysis":
                         
                         conf = float(np.max(p)) * 100
                         g = CLASS_NAMES[np.argmax(p)]
-                        results.append({"Model": name, "Grade": g, "Conf": conf})
+                        latency = (end_t - start_t) * 1000
+                        results.append({"Model": name, "Grade": g, "Conf": conf, "Latency": latency})
                         i += 1
                         my_bar.progress(i / 3)
                     
@@ -411,15 +405,23 @@ elif st.session_state.page == "Analysis":
                     for res in results:
                         border = "2px solid #00E676" if "Hybrid" in res['Model'] else "1px solid #333"
                         bg = "rgba(0, 230, 118, 0.05)" if "Hybrid" in res['Model'] else "#111"
+                        badge = '<span style="background:#00E676; color:#000; font-size:0.7rem; padding: 2px 8px; border-radius: 10px; margin-left:10px; font-weight:bold;">RECOMMENDED</span>' if "Hybrid" in res['Model'] else ''
                         
                         st.markdown(f"""
                         <div style="background: {bg}; padding: 15px; border-radius: 10px; border: {border}; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="color: #888; font-size: 0.9rem;">{res['Model']}</div>
+                                <div style="color: #888; font-size: 0.9rem;">{res['Model']} {badge}</div>
                                 <div style="font-size: 1.2rem; font-weight: bold;">{res['Grade']}</div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="color: #00E676; font-size: 1.2rem; font-weight: bold;">{res['Conf']:.1f}%</div>
+                            <div style="text-align: right; display: flex; gap: 20px;">
+                                <div>
+                                    <div style="color: #888; font-size: 0.7rem;">CONFIDENCE</div>
+                                    <div style="color: {'#00E676' if 'Hybrid' in res['Model'] else '#fff'}; font-size: 1.2rem; font-weight: bold;">{res['Conf']:.1f}%</div>
+                                </div>
+                                <div>
+                                    <div style="color: #888; font-size: 0.7rem;">LATENCY</div>
+                                    <div style="color: #fff; font-size: 1.2rem; font-weight: bold;">{res['Latency']:.0f} ms</div>
+                                </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
@@ -436,8 +438,8 @@ elif st.session_state.page == "Research":
     
     st.markdown("""
     <div class="glass-card" style="border-left: 4px solid #00E676;">
-    <b>Abstract:</b> We propose a dual-branch architecture that mitigates the limitations of small datasets in agricultural grading. 
-    By fusing <b>EfficientNetB0</b> (for local texture) and a custom <b>Vision Transformer</b> (for global geometry), we achieved a validation accuracy of 95.2%, significantly outperforming standalone models.
+    <b>Abstract:</b> We propose a dual-branch architecture that mitigates the limitations of small, imbalanced datasets in agricultural grading. 
+    By fusing <b>EfficientNetB0</b> (for local texture) and a custom <b>Vision Transformer</b> (for global geometry), we achieved a validation accuracy of 95.4% across 4 quality grades, significantly outperforming standalone models.
     </div>
     """, unsafe_allow_html=True)
     
@@ -462,7 +464,7 @@ elif st.session_state.page == "Research":
             <h4 style="color:#00E676">Branch 2: Global Context (ViT)</h4>
             <ul style="color:#aaa; line-height:1.6">
                 <li><b>Model:</b> Custom Vision Transformer</li>
-                <li><b>Config:</b> Patch Size 16x16, 4 Attention Heads, Projection Dim 128.</li>
+                <li><b>Config:</b> Patch Size 16x16, 4 Attention Heads, Projection Dim 64.</li>
                 <li><b>Role:</b> Analyzes the spatial structure and shape of the leaf.</li>
             </ul>
         </div>
@@ -477,7 +479,7 @@ elif st.session_state.page == "Research":
         st.markdown("""
         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: center;">
             <p style="color:#aaa; margin:0;">Standalone ViT</p>
-            <h2 style="color:#fff; margin:0;">80.4%</h2>
+            <h2 style="color:#fff; margin:0;">81.2%</h2>
             <p style="font-size: 0.8rem; color:#888;">Struggled with small dataset</p>
         </div>
         """, unsafe_allow_html=True)
@@ -485,7 +487,7 @@ elif st.session_state.page == "Research":
         st.markdown("""
         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; text-align: center;">
             <p style="color:#aaa; margin:0;">Standalone CNN</p>
-            <h2 style="color:#fff; margin:0;">93.3%</h2>
+            <h2 style="color:#fff; margin:0;">93.8%</h2>
             <p style="font-size: 0.8rem; color:#888;">Strong texture extraction</p>
         </div>
         """, unsafe_allow_html=True)
@@ -493,7 +495,7 @@ elif st.session_state.page == "Research":
         st.markdown("""
         <div style="background: rgba(0,230,118,0.1); border: 1px solid #00E676; padding: 20px; border-radius: 10px; text-align: center;">
             <p style="color:#00E676; font-weight:bold; margin:0;">Hybrid Model</p>
-            <h2 style="color:#00E676; margin:0;">95.2%</h2>
+            <h2 style="color:#00E676; margin:0;">95.4%</h2>
             <p style="font-size: 0.8rem; color:#00E676;">Optimal Multi-Branch Performance</p>
         </div>
         """, unsafe_allow_html=True)
