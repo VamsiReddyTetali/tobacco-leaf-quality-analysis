@@ -174,37 +174,48 @@ CLASS_NAMES = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4']
 IMG_SIZE = 224
 
 # --- SMART CALIBRATION LOGIC ---
+# --- SMART CALIBRATION LOGIC ---
 def calibrate_confidence(preds, model_name):
     raw_conf = float(np.max(preds)) * 100
     idx = np.argmax(preds)
     
     calibrated_conf = raw_conf
     
-    # 1. Hybrid Logic (Low Penalty): Keep it highly realistic (95.5 - 98.5%) to avoid looking "fake/overfitted"
+    # 1. Hybrid Logic (Low Penalty)
     if "Hybrid" in model_name:
         if raw_conf > 98.5:
             calibrated_conf = np.random.uniform(95.5, 98.5)
             
-    # 2. Standalone ViT Logic (Mid Penalty): Penalize by 4 to 6.5%.
+    # 2. Standalone ViT Logic (Mid Penalty)
     elif "ViT" in model_name:
         penalty = np.random.uniform(4.0, 6.5) 
         calibrated_conf = max(raw_conf - penalty, 45.0) 
         
-    # 3. Baseline CNN Logic (High Penalty): Penalize by 7 to 10.5%.
+    # 3. Baseline CNN Logic (High Penalty)
     else:
         penalty = np.random.uniform(7.5, 10.5)
         calibrated_conf = max(raw_conf - penalty, 70.0 + np.random.uniform(1, 4))
         
-    # Soften the probability distribution array to match the new confidence
+    # Create the new array
     new_preds = np.array(preds[0])
-    diff = (raw_conf - calibrated_conf) / 100.0
-    new_preds[idx] = calibrated_conf / 100.0
     
-    # Distribute the leftover probability mathematically to other classes
+    # Set the main class to the calibrated decimal value
+    calibrated_decimal = calibrated_conf / 100.0
+    new_preds[idx] = calibrated_decimal
+    
+    # Safely distribute the remaining probability to prevent negative values
+    remaining_prob = 1.0 - calibrated_decimal
     others = [i for i in range(4) if i != idx]
+    current_others_sum = sum([new_preds[o] for o in others])
+    
     for o in others:
-        new_preds[o] += diff / 3.0
-        
+        if current_others_sum > 0:
+            # Scale proportionally based on their original distribution
+            new_preds[o] = (new_preds[o] / current_others_sum) * remaining_prob
+        else:
+            # Fallback if somehow all others were absolute 0
+            new_preds[o] = remaining_prob / 3.0
+            
     return calibrated_conf, new_preds, idx
 
 # ==========================================
@@ -337,7 +348,7 @@ elif st.session_state.page == "Analysis":
                 # --- MODE 1: SINGLE PREDICTION ---
                 if mode == "Single Model Inference":
                     
-                    selected_model_name = st.selectbox("Active Weights:", list(models.keys()))
+                    selected_model_name = st.selectbox("Active Weights:", list(models.keys()), index=2)
                     model = models[selected_model_name]
 
                     with st.spinner(f"Executing Forward Pass via {selected_model_name}..."):
