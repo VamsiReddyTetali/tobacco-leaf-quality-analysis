@@ -217,19 +217,19 @@ def calibrate_confidence(preds, model_name):
 
 # --- HYBRID OUT-OF-DISTRIBUTION (OOD) DETECTION ---
 def validate_input(img_array, preds):
-    """
-    Evaluates both basic heuristic color channels and the model's Softmax confidence 
-    to reject non-leaf objects, screenshots, and ambiguous data.
-    """
     mean_r = np.mean(img_array[:, :, 0])
     mean_g = np.mean(img_array[:, :, 1])
     mean_b = np.mean(img_array[:, :, 2])
     
-    max_prob = float(np.max(preds))
+    probs = preds[0]
+    max_prob = float(np.max(probs))
+    
+    # 1. Calculate Shannon Entropy
+    entropy = -np.sum(probs * np.log(probs + 1e-10))
 
-    # Rule 1: Confidence Check (MAIN RULE - Model is uncertain)
-    if max_prob < 0.60:
-        return False, "Low model confidence (< 60%). Object not recognized as a valid tobacco leaf."
+    # Rule 1: Confidence & Entropy Check (MAIN RULE)
+    if max_prob < 0.65 or entropy > 1.2:
+        return False, f"Uncertain Input. Confidence: {max_prob*100:.1f}%, Entropy: {entropy:.2f}"
 
     # Rule 2: Extreme white images (Screenshots/Documents)
     if mean_r > 230 and mean_g > 230 and mean_b > 230:
@@ -239,9 +239,9 @@ def validate_input(img_array, preds):
     if mean_r < 15 and mean_g < 15 and mean_b < 15:
         return False, "Image too dark or empty."
         
-    # Rule 4: Unnatural blue (Digital noise/screens)
+    # Rule 4: Unnatural blue
     if mean_b > mean_r + 20 and mean_b > mean_g + 20:
-        return False, "Unnatural biological color profile (High Blue channel)."
+        return False, "Unnatural biological color profile."
 
     return True, "Valid"
 
