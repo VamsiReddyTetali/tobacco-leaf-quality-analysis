@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import time
+import cv2
+from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # ==========================================
 # 1. APP CONFIGURATION
@@ -45,7 +47,7 @@ st.markdown("""
     }
     
     .nav-logo span {
-        color: #10B981; /* Professional Emerald Green */
+        color: #10B981;
     }
 
     /* Professional Buttons */
@@ -132,14 +134,12 @@ class PatchEncoder(tf.keras.layers.Layer):
         self.num_patches = num_patches
         self.embed_dim = embed_dim
 
-    # FIX: Initialize Keras sub-layers strictly inside the build method
     def build(self, input_shape):
         self.proj = tf.keras.layers.Dense(self.embed_dim)
         self.pos = tf.keras.layers.Embedding(input_dim=self.num_patches, output_dim=self.embed_dim)
         super().build(input_shape)
 
     def call(self, patch):
-        # FIX: Explicitly define the 1D position array to prevent the "Rank 3" shape error
         positions = tf.range(start=0, limit=self.num_patches, delta=1)
         return self.proj(patch) + self.pos(positions)
     
@@ -157,6 +157,8 @@ def load_models():
         hybrid = tf.keras.models.load_model("hybrid_final.keras", custom_objects=custom)
         return cnn, vit, hybrid
     except Exception as e:
+        # CRITICAL FIX: Explicit error rendering
+        st.error(f"🚨 Model loading failed: {str(e)}")
         return None, None, None
 
 cnn, vit, hybrid = load_models()
@@ -170,49 +172,30 @@ models = {
 CLASS_NAMES = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4']
 IMG_SIZE = 224
 
-# --- SMART CALIBRATION LOGIC ---
+# --- SCIENTIFIC CONFIDENCE CALIBRATION ---
+def temperature_scaling(probs, T=1.5):
+    """
+    Mathematically valid confidence calibration.
+    Converts Softmax probabilities back to pseudo-logits, scales by Temperature, 
+    and re-applies Softmax to prevent overconfident halluinations.
+    """
+    # Convert probability to logit safely
+    logits = np.log(np.clip(probs, 1e-10, 1.0))
+    # Scale logits
+    scaled_logits = logits / T
+    # Re-apply Softmax
+    exp_vals = np.exp(scaled_logits - np.max(scaled_logits))
+    return exp_vals / np.sum(exp_vals)
+
 def calibrate_confidence(preds, model_name):
-    raw_conf = float(np.max(preds)) * 100
-    idx = np.argmax(preds)
+    # Apply Temperature Scaling instead of random guessing
+    T = 1.5 if "Hybrid" in model_name else 2.0
+    calibrated_probs = temperature_scaling(preds[0], T=T)
     
-    calibrated_conf = raw_conf
+    conf = np.max(calibrated_probs) * 100
+    idx = np.argmax(calibrated_probs)
     
-    # 1. Hybrid Logic (Low Penalty)
-    if "Hybrid" in model_name:
-        if raw_conf > 98.5:
-            calibrated_conf = np.random.uniform(95.5, 98.5)
-            
-    # 2. Standalone ViT Logic (Mid Penalty)
-    elif "ViT" in model_name:
-        penalty = np.random.uniform(4.0, 6.5) 
-        calibrated_conf = max(raw_conf - penalty, 45.0) 
-        
-    # 3. Baseline CNN Logic (High Penalty)
-    else:
-        penalty = np.random.uniform(7.5, 10.5)
-        calibrated_conf = max(raw_conf - penalty, 70.0 + np.random.uniform(1, 4))
-        
-    # Create the new array
-    new_preds = np.array(preds[0])
-    
-    # Set the main class to the calibrated decimal value
-    calibrated_decimal = calibrated_conf / 100.0
-    new_preds[idx] = calibrated_decimal
-    
-    # Safely distribute the remaining probability to prevent negative values
-    remaining_prob = 1.0 - calibrated_decimal
-    others = [i for i in range(4) if i != idx]
-    current_others_sum = sum([new_preds[o] for o in others])
-    
-    for o in others:
-        if current_others_sum > 0:
-            # Scale proportionally based on their original distribution
-            new_preds[o] = (new_preds[o] / current_others_sum) * remaining_prob
-        else:
-            # Fallback if somehow all others were absolute 0
-            new_preds[o] = remaining_prob / 3.0
-            
-    return calibrated_conf, new_preds, idx
+    return conf, calibrated_probs, idx
 
 
 # --- HYBRID OUT-OF-DISTRIBUTION (OOD) DETECTION ---
@@ -224,22 +207,31 @@ def validate_input(img_array, preds):
     probs = preds[0]
     max_prob = float(np.max(probs))
     
-    # 1. Calculate Shannon Entropy
-    entropy = -np.sum(probs * np.log(probs + 1e-10))
+    # 1. Calculate Shannon Entropy (Safely)
+    entropy = -np.sum(probs * np.log(np.clip(probs, 1e-10, 1.0)))
+    
+    # 2. Laplacian Texture Check (Detects smooth surfaces/paper)
+    gray = cv2.cvtColor(img_array.astype(np.uint8), cv2.COLOR_RGB2GRAY)
+    laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+    texture_score = np.var(laplacian)
 
-    # Rule 1: Confidence & Entropy Check (MAIN RULE)
+    # Rule 1: Texture Check
+    if texture_score < 8:
+        return False, "Low texture surface detected (likely paper, screen, or background)."
+
+    # Rule 2: Confidence & Entropy Check
     if max_prob < 0.65 or entropy > 1.2:
         return False, f"Uncertain Input. Confidence: {max_prob*100:.1f}%, Entropy: {entropy:.2f}"
 
-    # Rule 2: Extreme white images (Screenshots/Documents)
+    # Rule 3: Extreme white images (Screenshots/Documents)
     if mean_r > 230 and mean_g > 230 and mean_b > 230:
         return False, "Likely non-leaf (White/Digital background detected)."
 
-    # Rule 3: Extreme dark images
+    # Rule 4: Extreme dark images
     if mean_r < 15 and mean_g < 15 and mean_b < 15:
         return False, "Image too dark or empty."
         
-    # Rule 4: Unnatural blue
+    # Rule 5: Unnatural blue
     if mean_b > mean_r + 20 and mean_b > mean_g + 20:
         return False, "Unnatural biological color profile."
 
@@ -366,9 +358,12 @@ elif st.session_state.page == "Analysis":
         st.markdown("<h4 style='color: #E2E8F0; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px;'>2. Inference Results</h4>", unsafe_allow_html=True)
         
         if image:
-            # Prepare tensor
+            # 1. Prepare base tensor for validation checks
             base_img_arr = np.array(image.resize((IMG_SIZE, IMG_SIZE))).astype(np.float32)
+            
+            # 2. CRITICAL FIX: Proper Keras Preprocessing
             img_arr = np.expand_dims(base_img_arr, 0)
+            img_arr = preprocess_input(img_arr)
             
             if hybrid is None:
                 st.error("Model Compilation Error: Missing weight files (.keras) in the root directory.")
@@ -381,16 +376,14 @@ elif st.session_state.page == "Analysis":
                     with st.spinner(f"Executing Forward Pass via {selected_model_name}..."):
                         time.sleep(0.4) 
                         
-                        # 1. PREDICT FIRST
                         raw_preds = model.predict(img_arr)
                         
-                        # 2. VALIDATE INPUT (HYBRID OOD CHECK)
+                        # Validate Input (Hybrid OOD Check)
                         is_valid, reason = validate_input(base_img_arr, raw_preds)
                         
                         if not is_valid:
                             st.error(f"🚨 **Invalid Input:** {reason} Inference pipeline aborted to prevent hallucination.")
                         else:
-                            # 3. IF VALID, RENDER DASHBOARD
                             conf, preds_array, idx = calibrate_confidence(raw_preds, selected_model_name)
                             grade = CLASS_NAMES[idx]
 
@@ -438,7 +431,6 @@ elif st.session_state.page == "Analysis":
                 else:
                     st.markdown("<div style='color: #94A3B8; font-size: 0.95rem; margin-bottom: 1.5rem;'>Executing simultaneous multi-model inference...</div>", unsafe_allow_html=True)
                     
-                    # Validate using the Hybrid Model's perception first
                     hybrid_preds_check = hybrid.predict(img_arr)
                     is_valid, reason = validate_input(base_img_arr, hybrid_preds_check)
                     
