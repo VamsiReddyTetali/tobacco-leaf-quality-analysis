@@ -102,9 +102,6 @@ st.markdown("""
 # ==========================================
 # 4. MODEL LOADING & CUSTOM LAYERS
 # ==========================================
-# ==========================================
-# 4. MODEL LOADING & CUSTOM LAYERS
-# ==========================================
 @tf.keras.utils.register_keras_serializable()
 class Patches(tf.keras.layers.Layer):
     def __init__(self, patch_size=1, **kwargs):
@@ -174,7 +171,6 @@ CLASS_NAMES = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4']
 IMG_SIZE = 224
 
 # --- SMART CALIBRATION LOGIC ---
-# --- SMART CALIBRATION LOGIC ---
 def calibrate_confidence(preds, model_name):
     raw_conf = float(np.max(preds)) * 100
     idx = np.argmax(preds)
@@ -217,6 +213,37 @@ def calibrate_confidence(preds, model_name):
             new_preds[o] = remaining_prob / 3.0
             
     return calibrated_conf, new_preds, idx
+
+
+# --- HYBRID OUT-OF-DISTRIBUTION (OOD) DETECTION ---
+def validate_input(img_array, preds):
+    """
+    Evaluates both basic heuristic color channels and the model's Softmax confidence 
+    to reject non-leaf objects, screenshots, and ambiguous data.
+    """
+    mean_r = np.mean(img_array[:, :, 0])
+    mean_g = np.mean(img_array[:, :, 1])
+    mean_b = np.mean(img_array[:, :, 2])
+    
+    max_prob = float(np.max(preds))
+
+    # Rule 1: Confidence Check (MAIN RULE - Model is uncertain)
+    if max_prob < 0.60:
+        return False, "Low model confidence (< 60%). Object not recognized as a valid tobacco leaf."
+
+    # Rule 2: Extreme white images (Screenshots/Documents)
+    if mean_r > 230 and mean_g > 230 and mean_b > 230:
+        return False, "Likely non-leaf (White/Digital background detected)."
+
+    # Rule 3: Extreme dark images
+    if mean_r < 15 and mean_g < 15 and mean_b < 15:
+        return False, "Image too dark or empty."
+        
+    # Rule 4: Unnatural blue (Digital noise/screens)
+    if mean_b > mean_r + 20 and mean_b > mean_g + 20:
+        return False, "Unnatural biological color profile (High Blue channel)."
+
+    return True, "Valid"
 
 # ==========================================
 # 5. NAVIGATION BAR
@@ -339,96 +366,110 @@ elif st.session_state.page == "Analysis":
         st.markdown("<h4 style='color: #E2E8F0; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px;'>2. Inference Results</h4>", unsafe_allow_html=True)
         
         if image:
-            img_arr = np.array(image.resize((IMG_SIZE, IMG_SIZE))).astype(np.float32)
-            img_arr = np.expand_dims(img_arr, 0)
+            # Prepare tensor
+            base_img_arr = np.array(image.resize((IMG_SIZE, IMG_SIZE))).astype(np.float32)
+            img_arr = np.expand_dims(base_img_arr, 0)
             
             if hybrid is None:
                 st.error("Model Compilation Error: Missing weight files (.keras) in the root directory.")
             else:
                 # --- MODE 1: SINGLE PREDICTION ---
                 if mode == "Single Model Inference":
-                    
                     selected_model_name = st.selectbox("Active Weights:", list(models.keys()), index=2)
                     model = models[selected_model_name]
 
                     with st.spinner(f"Executing Forward Pass via {selected_model_name}..."):
                         time.sleep(0.4) 
+                        
+                        # 1. PREDICT FIRST
                         raw_preds = model.predict(img_arr)
                         
-                        # Apply Smart Calibration
-                        conf, preds_array, idx = calibrate_confidence(raw_preds, selected_model_name)
-                        grade = CLASS_NAMES[idx]
-
-                    st.markdown(f"""
-                    <div class="metric-card" style="text-align: center; padding: 2.5rem 1rem;">
-                        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8; margin-bottom: 10px;">Predicted Classification</div>
-                        <h1 style="font-size: 3.5rem; margin: 0; color: #FFFFFF; font-weight: 700;">{grade}</h1>
-                        <div style="margin-top: 15px;">
-                            <div style="color: #94A3B8; font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Statistical Confidence</div>
-                            <div style="font-size: 2rem; font-weight: 700; color: #10B981;">{conf:.2f}%</div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    # Dynamic Insights
-                    insights = {
-                        "Grade 1": "Premium leaf structure identified. High geometric integrity and optimal color saturation.",
-                        "Grade 2": "Standard commercial leaf. Minor surface blemishes detected but structurally sound.",
-                        "Grade 3": "Sub-standard quality. Notable discoloration or incomplete curing detected.",
-                        "Grade 4": "Rejected. Severe anomalies, brittle texture, or significant necrotic tissue detected."
-                    }
-                    st.info(f"**Diagnostic Output:** {insights.get(grade, 'Analysis Complete.')}")
-
-                    st.markdown("<h4 style='color: #E2E8F0; font-size: 1rem; margin-top: 2rem;'>Softmax Probability Distribution</h4>", unsafe_allow_html=True)
-                    
-                    probs = {name: p*100 for name, p in zip(CLASS_NAMES, preds_array)}
-                    
-                    for class_name, prob in probs.items():
-                        bar_color = "#10B981" if class_name == grade else "#334155"
-                        text_color = "#FFFFFF" if class_name == grade else "#94A3B8"
-                        font_weight = "600" if class_name == grade else "400"
+                        # 2. VALIDATE INPUT (HYBRID OOD CHECK)
+                        is_valid, reason = validate_input(base_img_arr, raw_preds)
                         
-                        st.markdown(f"""
-                        <div style="margin-bottom: 14px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span style="color: {text_color}; font-size: 0.95rem; font-weight: {font_weight};">{class_name}</span>
-                                <span style="color: {text_color}; font-size: 0.95rem; font-weight: {font_weight};">{prob:.1f}%</span>
+                        if not is_valid:
+                            st.error(f"🚨 **Invalid Input:** {reason} Inference pipeline aborted to prevent hallucination.")
+                        else:
+                            # 3. IF VALID, RENDER DASHBOARD
+                            conf, preds_array, idx = calibrate_confidence(raw_preds, selected_model_name)
+                            grade = CLASS_NAMES[idx]
+
+                            st.markdown(f"""
+                            <div class="metric-card" style="text-align: center; padding: 2.5rem 1rem;">
+                                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8; margin-bottom: 10px;">Predicted Classification</div>
+                                <h1 style="font-size: 3.5rem; margin: 0; color: #FFFFFF; font-weight: 700;">{grade}</h1>
+                                <div style="margin-top: 15px;">
+                                    <div style="color: #94A3B8; font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Statistical Confidence</div>
+                                    <div style="font-size: 2rem; font-weight: 700; color: #10B981;">{conf:.2f}%</div>
+                                </div>
                             </div>
-                            <div style="width: 100%; background-color: #1E293B; border-radius: 6px; height: 10px;">
-                                <div style="width: {prob}%; background-color: {bar_color}; height: 100%; border-radius: 6px;"></div>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                            """, unsafe_allow_html=True)
+
+                            insights = {
+                                "Grade 1": "Premium leaf structure identified. High geometric integrity and optimal color saturation.",
+                                "Grade 2": "Standard commercial leaf. Minor surface blemishes detected but structurally sound.",
+                                "Grade 3": "Sub-standard quality. Notable discoloration or incomplete curing detected.",
+                                "Grade 4": "Rejected. Severe anomalies, brittle texture, or significant necrotic tissue detected."
+                            }
+                            st.info(f"**Diagnostic Output:** {insights.get(grade, 'Analysis Complete.')}")
+
+                            st.markdown("<h4 style='color: #E2E8F0; font-size: 1rem; margin-top: 2rem;'>Softmax Probability Distribution</h4>", unsafe_allow_html=True)
+                            
+                            probs = {name: p*100 for name, p in zip(CLASS_NAMES, preds_array)}
+                            
+                            for class_name, prob in probs.items():
+                                bar_color = "#10B981" if class_name == grade else "#334155"
+                                text_color = "#FFFFFF" if class_name == grade else "#94A3B8"
+                                font_weight = "600" if class_name == grade else "400"
+                                
+                                st.markdown(f"""
+                                <div style="margin-bottom: 14px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                        <span style="color: {text_color}; font-size: 0.95rem; font-weight: {font_weight};">{class_name}</span>
+                                        <span style="color: {text_color}; font-size: 0.95rem; font-weight: {font_weight};">{prob:.1f}%</span>
+                                    </div>
+                                    <div style="width: 100%; background-color: #1E293B; border-radius: 6px; height: 10px;">
+                                        <div style="width: {prob}%; background-color: {bar_color}; height: 100%; border-radius: 6px;"></div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
 
                 # --- MODE 2: MODEL COMPARISON ---
                 else:
                     st.markdown("<div style='color: #94A3B8; font-size: 0.95rem; margin-bottom: 1.5rem;'>Executing simultaneous multi-model inference...</div>", unsafe_allow_html=True)
-                    results = []
                     
-                    for name, model in models.items():
-                        raw_preds = model.predict(img_arr)
-                        conf, _, idx = calibrate_confidence(raw_preds, name)
-                        g = CLASS_NAMES[idx]
-                        results.append({"Model": name, "Grade": g, "Conf": conf})
+                    # Validate using the Hybrid Model's perception first
+                    hybrid_preds_check = hybrid.predict(img_arr)
+                    is_valid, reason = validate_input(base_img_arr, hybrid_preds_check)
                     
-                    for res in results:
-                        is_hybrid = "Hybrid" in res['Model']
-                        border = "border-left: 4px solid #10B981;" if is_hybrid else "border-left: 4px solid #334155;"
-                        bg = "rgba(16, 185, 129, 0.05)" if is_hybrid else "rgba(255, 255, 255, 0.02)"
-                        badge = '<span style="background:#10B981; color:#000; font-size:0.65rem; padding: 3px 8px; border-radius: 4px; margin-left:12px; font-weight:700;">PROPOSED ARCHITECTURE</span>' if is_hybrid else ''
+                    if not is_valid:
+                        st.error(f"🚨 **Invalid Input:** {reason} Inference pipeline aborted across all models.")
+                    else:
+                        results = []
+                        for name, model in models.items():
+                            raw_preds = model.predict(img_arr)
+                            conf, _, idx = calibrate_confidence(raw_preds, name)
+                            g = CLASS_NAMES[idx]
+                            results.append({"Model": name, "Grade": g, "Conf": conf})
                         
-                        st.markdown(f"""
-                        <div style="background: {bg}; padding: 1.5rem; border-radius: 8px; {border} margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="color: #94A3B8; font-size: 0.85rem; margin-bottom: 6px; font-weight: 500;">{res['Model']} {badge}</div>
-                                <div style="font-size: 1.3rem; font-weight: 600; color: #FFFFFF;">{res['Grade']}</div>
+                        for res in results:
+                            is_hybrid = "Hybrid" in res['Model']
+                            border = "border-left: 4px solid #10B981;" if is_hybrid else "border-left: 4px solid #334155;"
+                            bg = "rgba(16, 185, 129, 0.05)" if is_hybrid else "rgba(255, 255, 255, 0.02)"
+                            badge = '<span style="background:#10B981; color:#000; font-size:0.65rem; padding: 3px 8px; border-radius: 4px; margin-left:12px; font-weight:700;">PROPOSED ARCHITECTURE</span>' if is_hybrid else ''
+                            
+                            st.markdown(f"""
+                            <div style="background: {bg}; padding: 1.5rem; border-radius: 8px; {border} margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: #94A3B8; font-size: 0.85rem; margin-bottom: 6px; font-weight: 500;">{res['Model']} {badge}</div>
+                                    <div style="font-size: 1.3rem; font-weight: 600; color: #FFFFFF;">{res['Grade']}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Confidence</div>
+                                    <div style="color: {'#10B981' if is_hybrid else '#FFFFFF'}; font-size: 1.5rem; font-weight: 700;">{res['Conf']:.2f}%</div>
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; font-weight: 600;">Confidence</div>
-                                <div style="color: {'#10B981' if is_hybrid else '#FFFFFF'}; font-size: 1.5rem; font-weight: 700;">{res['Conf']:.2f}%</div>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                            """, unsafe_allow_html=True)
 
         else:
             st.info("Awaiting input tensor. Please upload a localized image or capture via webcam.")
