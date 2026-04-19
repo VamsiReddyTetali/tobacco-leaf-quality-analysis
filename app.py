@@ -188,8 +188,7 @@ def temperature_scaling(probs, T=1.5):
     return exp_vals / np.sum(exp_vals)
 
 def calibrate_confidence(preds, model_name):
-    # Apply Temperature Scaling instead of random guessing
-    T = 1.5 if "Hybrid" in model_name else 2.0
+    T = 1.10 if "Hybrid" in model_name else 1.25
     calibrated_probs = temperature_scaling(preds[0], T=T)
     
     conf = np.max(calibrated_probs) * 100
@@ -220,7 +219,7 @@ def validate_input(img_array, preds):
         return False, "Low texture surface detected (likely paper, screen, or background)."
 
     # Rule 2: Confidence & Entropy Check
-    if max_prob < 0.65 or entropy > 1.2:
+    if max_prob < 0.55 or entropy > 1.35:
         return False, f"Uncertain Input. Confidence: {max_prob*100:.1f}%, Entropy: {entropy:.2f}"
 
     # Rule 3: Extreme white images (Screenshots/Documents)
