@@ -188,7 +188,12 @@ def temperature_scaling(probs, T=1.5):
     return exp_vals / np.sum(exp_vals)
 
 def calibrate_confidence(preds, model_name):
-    T = 1.10 if "Hybrid" in model_name else 1.25
+    if "Hybrid" in model_name:
+        T = 1.05
+    elif "ViT" in model_name:
+        T = 1
+    else:
+        T = 1.10
     calibrated_probs = temperature_scaling(preds[0], T=T)
     
     conf = np.max(calibrated_probs) * 100
